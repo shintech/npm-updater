@@ -1,0 +1,1 @@
+DIR=$(pwd) /usr/local/bin/node /home/mike/Development/npm-updater/index.js $1
