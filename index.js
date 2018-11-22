@@ -44,7 +44,7 @@ function checkForPkg () {
       }
 
       const p = require(pkg)
-      console.log(compare(version, p.version))
+
       if (compare(version, p.version) <= 0) { return reject({ message: `package.json - argument is lower than previous version -> ${p.version}` }) }
 
       p.version = process.argv[3]
