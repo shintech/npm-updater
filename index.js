@@ -10,13 +10,11 @@ const version = process.argv[3]
 var regex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$/
 
 if (version === undefined) {
-  logger.error('version argument is "undefined"...' )
-  return false
+  return logger.error('version argument is "undefined"...' )
 }
 
 if (!regex.test(version)) {
-  logger.error('invalid argument for version number...')
-  return false
+  return logger.error('invalid argument for version number...')
 }
 
 main()

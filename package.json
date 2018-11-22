@@ -1,6 +1,6 @@
 {
   "name": "npm-updater",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "index.js",
   "license": "MIT",
   "repository": "git+https://github.com/shintech/js-spyware.git",
