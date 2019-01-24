@@ -1,12 +1,30 @@
+#!/usr/bin/env node
+
 var fs = require('fs')
 const path = require('path')
 const chalk = require('chalk')
-const logger = require('winston-color')
+const winston = require('winston')
 const compare = require("compare-versions")
+const { promisify } = require("util")
 
-const currentDir = process.argv[2]
-const pkg = path.join(currentDir, 'package.json')
-const version = process.argv[3]
+const PWD = process.cwd()
+const pkg = path.join(PWD, 'package.json')
+const version = process.argv[2]
+
+const stat = promisify(fs.stat)
+const writeFile = promisify(fs.writeFile)
+
+const logger = winston.createLogger({
+  transports: [
+    new winston.transports.Console()
+  ],
+
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.simple()
+  )
+})
+
 var regex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$/
 
 if (version === undefined) {
@@ -22,34 +40,38 @@ main()
 // ----------------------------------------------------------------------------
 
 async function main () {
+  let p
+  
   try {
-    await checkForPkg()
+    if (await checkForPkg()) {
+      logger.info(`${chalk.yellow('package.json')} was found...`)
+      p = require(pkg)
+    } else {
+      throw new Error('package.json was not found')
+    }
 
-    logger.info(`${chalk.yellow('package.json')} was found...`)
-    logger.info(`writing version ${chalk.green(process.argv[3])} to ${chalk.yellow('package.json')}...`)    
+    if (compare(version, p.version) <= 0) { throw new Error(`package.json - argument ${version} is <= previous version -> ${p.version}`) }
+
+    logger.info(`writing version ${chalk.green(version)} to ${chalk.yellow('package.json')}...`)
+
+    configurePackage(p)
   } catch (err) {
     logger.error(err.message)
   }
 }
 
-function checkForPkg () {
-  return new Promise (function (resolve, reject) {
-    fs.stat(pkg, (err, res) => {
-      if (err && err.path === pkg) {
-        reject({ message: 'pcakage.json not found...'})
-      } else if (err) {
-        reject(err.message)
-      }
+async function checkForPkg () {
+  try {
+    await stat(pkg)
+    return true
+  } catch (err) {
+    return false
+  }
+}
 
-      const p = require(pkg)
+async function configurePackage (_pkg) {
+  _pkg.version = process.argv[2]
 
-      if (compare(version, p.version) <= 0) { return reject({ message: `package.json - argument is lower than previous version -> ${p.version}` }) }
-
-      p.version = process.argv[3]
-
-      fs.writeFile(pkg, JSON.stringify(p, null, 2), () => {
-        resolve(pkg)
-      })
-    })
-  })
+  await writeFile(pkg, JSON.stringify(_pkg, null, 2))
+  logger.info('success...')
 }
