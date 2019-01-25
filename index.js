@@ -3,9 +3,11 @@
 var fs = require('fs')
 const path = require('path')
 const chalk = require('chalk')
-const winston = require('winston')
-const compare = require("compare-versions")
-const { promisify } = require("util")
+const Shlogger = require('shlogger')
+const compare = require('compare-versions')
+const { promisify } = require('util')
+
+const logger = new Shlogger()
 
 const PWD = process.cwd()
 const pkg = path.join(PWD, 'package.json')
@@ -14,25 +16,14 @@ const version = process.argv[2]
 const stat = promisify(fs.stat)
 const writeFile = promisify(fs.writeFile)
 
-const logger = winston.createLogger({
-  transports: [
-    new winston.transports.Console()
-  ],
-
-  format: winston.format.combine(
-    winston.format.colorize(),
-    winston.format.simple()
-  )
-})
-
 var regex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$/
 
 if (version === undefined) {
-  return logger.error('version argument is "undefined"...' )
+  throw new Error('version argument is "undefined"...')
 }
 
 if (!regex.test(version)) {
-  return logger.error('invalid argument for version number...')
+  throw new Error('invalid argument for version number...')
 }
 
 main()
@@ -41,7 +32,7 @@ main()
 
 async function main () {
   let p
-  
+
   try {
     if (await checkForPkg()) {
       logger.info(`${chalk.yellow('package.json')} was found...`)
